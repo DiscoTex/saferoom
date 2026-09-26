@@ -1,0 +1,440 @@
+!% -S
+#Include "Parser";
+
+Constant Story  "TIM:  SAFE ROOM";
+Constant Headline "^A short, gory Left 4 Dead-style survivor tale^";
+
+Global lives    = 45;
+Global won      = false;
+Global haskey   = false;
+Global hasfuel  = false;
+Global gateopen = false;
+
+[ HordeTick;
+    if (won) return 0;
+    lives = lives - 1;
+    if (lives == 20) "^^You hear the boards buckle inward a fist's width; a wet
+        arm snakes through, fingers opening and closing in the light.^";
+    if (lives == 8)  "^^You can smell them now -- rot and copper
+        and wrongness -- right through the wood, and the door groans.^";
+    if (lives <= 0) {
+        deadflag = 2;
+        print "^",
+          "      ______                ^",
+          "     (  oo  )               ^",
+          "     ( .==. )               ^",
+          "      |    |                ^",
+          "      |____|                ^^",
+          "The front door shatters.  Wood flies.  The horde pours in and they
+           are on you before the crowbar rises -- hungry, patient, dozens of them
+           piling across the living room.  Your last breath is a wet hiss under
+           the pile.^^",
+          "*** YOU ARE DEAD.  You waited too long in the safe room. ***^";
+        return 1;
+    }
+    return 0;
+];
+
+
+
+Object LivingRoom "SAFE ROOM"
+  with  description [;
+            print "SAFE ROOM^Boarded windows, a couch spilling its guts, claw
+                marks in the drywall.  A staircase climbs UP, a doorway runs
+                WEST to the kitchen, and the FRONT DOOR stands barred to the
+                SOUTH.";
+            if (PocketKnife in LivingRoom)
+                print "  On the coffee table sits a POCKETKNIFE.";
+            print "  A grey WELCOME MAT lies at the door.^";
+        ],
+        daemon   HordeTick,
+        u_to     Stairwell,
+        w_to     Kitchen,
+        s_to     FrontPorch,
+        has      light;
+
+Object Stairwell "UPSTAIRS LANDING"
+  with  description
+            "UPSTAIRS LANDING^
+            The landing creaks.  One wall is smeared dark where a message was
+             started and never finished.  Doors to the EAST (bedroom) and NORTH
+             (bathroom); stairs down (D).",
+        d_to     LivingRoom,
+        e_to     Bedroom,
+        n_to     Bathroom,
+        has      light;
+
+Object Bedroom "BEDROOM"
+  with  description [;
+            print "BEDROOM^A mattress dragged against the window; it stinks
+                of sweat and old fear.";
+            if (Glock in Bedroom && Note in Bedroom)
+                print "  On a nightstand:  a GLOCK and a NOTE in a dead
+                    man's hand.";
+            else if (Glock in Bedroom)
+                print "  On the nightstand:  a GLOCK -- the note beside it
+                    is already gone.";
+            else if (Note in Bedroom)
+                print "  On the nightstand:  a NOTE in a dead man's hand --
+                    the GLOCK is already gone.";
+            else
+                print "  The nightstand is bare now -- you already took
+                    what was on it.";
+            print "^";
+        ],
+        s_to     Stairwell,
+        has      light;
+
+Object Glock "GLOCK" Bedroom
+  with  name 'glock' 'gun' 'pistol' 'handgun' 'sidearm' 'weapon' 'firearm',
+        description
+            "Dead man's sidearm, slide locked back on an empty chamber.  Not
+             one round left in it -- whatever got him, he emptied the clip
+             first.";
+
+Object Note "NOTE" Bedroom
+  with  name 'note' 'paper' 'letter' 'message' 'writing' 'scrawl' 'pencil',
+        description
+            "Blunt pencil, shaking hand:  ^^'IF YOU'RE READING THIS THE KEY
+             IS UNDER THE MAT.  DON'T GO IN THE BATHROOM.  DON'T GO OUT THE
+             KITCHEN WINDOW.  THE GATE NEEDS THE BAR.  GOD HELP YOU.'^";
+
+Object Bathroom "BATHROOM"
+  with  description
+            "BATHROOM^
+            Pink and cracked, the mirror shattered.  The shower curtain is
+             drawn and water -- still warm -- drips behind it.",
+        s_to     Stairwell,
+        before  [;
+            Jump:
+                deadflag = 2;
+                print "^",
+                  "    / /  / /  / /  / /      ^",
+                  "   / /  / /  / /  / /       ^^",
+                  "You pull the curtain back -- one eye squeezed shut.  A Ridden
+                   stands in the tub, shoulders hunched, grinning a mouthful of
+                   teeth.  It lunges before your knife is out, finds your throat,
+                   and yanks.  Warm.  Wet.  Endless.^",
+                  "*** YOU ARE DEAD -- bathtub surprise ***^";
+                return 2;
+        ],
+        has   light;
+
+Object Curtain "SHOWER CURTAIN" Bathroom
+  with  name 'curtain' 'shower' 'tub' 'bathtub' 'bath' 'vinyl' 'liner' 'mirror',
+        description
+            "Cheap vinyl, drawn shut.  Something behind it is dripping, slow
+             and steady, though the water should be off by now.",
+        before  [;
+            Search, Enter, Open, Pull, LookUnder, Take:
+                deadflag = 2;
+                print "^",
+                  "    / /  / /  / /  / /      ^",
+                  "   / /  / /  / /  / /       ^^",
+                  "You pull the curtain back -- one eye squeezed shut.  A Ridden
+                   stands in the tub, shoulders hunched, grinning a mouthful of
+                   teeth.  It lunges before your knife is out, finds your throat,
+                   and yanks.  Warm.  Wet.  Endless.^",
+                  "*** YOU ARE DEAD -- bathtub surprise ***^";
+                return 2;
+        ];
+
+Object Kitchen "KITCHEN"
+  with  description [;
+            print "KITCHEN^Cabinets hanging open, a fridge empty and ajar";
+            if (KitchenCan in Kitchen)
+                print ", and on the counter a fat red GAS CAN.";
+            else
+                print " -- the counter is bare now.";
+            print "  A broken window gapes to the NORTH into the yard -- and
+                the yard is not empty.^";
+        ],
+        e_to     LivingRoom,
+        n_to     [;
+            deadflag = 2;
+            print "^",
+              "     *   *    *  *   *      ^",
+              "    *  *   *    *  *        ^^",
+              "The frames give and the mob pours in from the yard.  They swarm
+               the counter, then you.  Ripping.  Wet.  Quick.^",
+              "*** YOU ARE DEAD -- you went out the kitchen window ***^";
+            return 1;
+        ],
+        has      light;
+
+Object FrontPorch "FRONT PORCH"
+  with  description
+            "FRONT PORCH^
+            Behind you the barred front door; ahead a cracked porch spilling
+             into a yard thick with slow, shuffling bodies.  A RUSTED GATE
+             blocks the way EAST.  The ESCAPE VAN squats in the weeds to the
+             north.",
+        s_to     LivingRoom,
+        e_to     FrontYard,
+        n_to     [;
+            if (roomkey in Player && FullCan in Player && gateopen) {
+                won = true;
+                deadflag = 3;
+                print "^",
+                  "        .   .               ^",
+                  "     '    _    '            ^",
+                  "    -----(___)-----         ^^",
+                  "You climb into the van.^^The engine CHUGS to life -- one ugly,
+                   perfect roar.  You reverse over the weeds, scatter a knot of
+                   Ridden like tenpins, and roll through the open GATE.  Behind
+                   you the safehouse folds in with a groan of timber.^^ On the
+                   highway the sun is coming up, and somewhere south there are
+                   people who say your name without fear.^^ *** YOU MADE IT OUT.
+                   THE SAFE ROOM HOLDS. ***^";
+                return 1;
+            }
+            if (roomkey notin Player) {
+                "You climb into the van -- but the driver's door is locked and
+                 you have no KEY.  The room key is taped under the WELCOME MAT
+                 in the safe room.  SEARCH it.^";
+                return 1;
+            }
+            if (FullCan notin Player) {
+                "You climb into the van.  The tank needle sits on E; the engine
+                 would cough and die.  Grab the EMPTY GAS CAN from the KITCHEN,
+                 carry it to the FRONT YARD, and PRY the welded cap on the
+                 GENERATOR with the CROWBAR to fill it, then bring the FULL CAN
+                 back here.^";
+                return 1;
+            }
+            "You climb into the van.  The engine turns over, once, twice -- then
+             catches with a roar that cracks the glass.  But the GATE to the EAST
+             is still shut and padlocked.  The van won't take a fence.  OPEN the
+             GATE first, then drive.^";
+            return 1;
+        ],
+        has      light;
+
+Object FrontYard "FRONT YARD"
+  with  description
+            "FRONT YARD^
+            A dead lawn shivering with slow bodies pressed against the fence.
+             At the near east side a low GENERATOR sits built into the wall, its
+             fuel cap welded shut.  The RUSTED GATE stands east.",
+        e_to     [;
+            if (gateopen == false) {
+                deadflag = 2;
+                print "^",
+                  "    +--+--+--+--+--+        ^",
+                  "    |xx|  |xx|  |xx|        ^",
+                  "    +--+--+--+--+--+        ^^",
+                  "You shoulder the RUSTED GATE -- but the padlock is still on and
+                   two Ridden grind it shut on your hips like a bear trap.  You
+                   are pinned, and they are not in a hurry.  They take their
+                   time.^",
+                  "*** YOU ARE DEAD -- squeezed between the gate and the horde ***^";
+                return 1;
+            }
+            deadflag = 2;
+            print "^",
+              "    )  (   )  (   )         ^",
+              "   (    )  (    )  (        ^^",
+              "You slip through the wide-open GATE into the street beyond.  But
+               there is no help waiting out here -- only more of them, and you
+               have walked away from the only way out.  They close around you in
+               the open.^",
+              "*** YOU ARE DEAD -- you left the yard on foot ***^";
+            return 1;
+        ],
+        w_to     FrontPorch,
+        has      light;
+
+Object Van "ESCAPE VAN" FrontPorch
+  with  name 'van' 'rv' 'truck' 'vehicle' 'escape' 'metaphor' 'white' 'engine',
+        description
+            "A white RV, 'I AM NOT A METAPHOR' stenciled faint on the side.
+             The driver's door is locked and the tank reads near empty.",
+        before   [;
+            Take:
+                "It's a whole RV.  Even in a horror movie, you can't fit that
+                 in your pocket.^";
+                return 2;
+            Search:
+                "Worthless junk under the seat and a dead lighter.  Nothing to
+                 help you get away -- the KEY and the GAS are the plan.^";
+                return 2;
+            Enter, GoIn, Turn, SwitchOn, Unlock:
+                <<Go n_obj>>;
+                return 2;
+        ];
+
+Object Gate "RUSTED GATE" FrontYard
+  with  name 'gate' 'rust' 'fence' 'chain-link' 'chainlink' 'padlock' 'lock'
+             'rusted',
+        description
+            "A chain-link gate padlocked with a hand-sized lump of rust.  On
+             foot you would not get ten feet past it.  Crack the padlock with
+             a CROWBAR so the VAN can drive through -- that is the only real
+             way out.",
+        before  [;
+            Take:
+                "It's set into the wall -- a chain-link gate this size isn't
+                 going anywhere in your pocket.^";
+                return 2;
+            Open, Unlock, Attack:
+                if (crowbar notin Player) {
+                    "The padlock is a solid lump of rust -- your fingers can't
+                     budge it.  You need a CROWBAR to break it.^";
+                    return 2;
+                }
+                gateopen = true;
+                "You wedge the crowbar into the padlock and heave.  Rust flakes,
+                 metal screams, the lock pops.  The gate swings wide.^";
+                return 2;
+        ];
+
+
+Object Mat "WELCOME MAT" LivingRoom
+  with  name 'mat' 'doormat' 'rug' 'welcome' 'carpet' 'floor',
+        description
+            "A grey rubber mat that says WELCOME -- worn to WELC_M.  Folded over
+             at one corner, it does not lie flat.",
+        before  [;
+            Search, Take:
+                if (haskey == false) {
+                    move roomkey to Player;
+                    haskey = true;
+                    move crowbar to Player;
+                    "You lift the mat.  Taped underneath:  a painted room KEY
+                     and a short sharp CROWBAR.  You take them both.^";
+                    return 2;
+                }
+                "Nothing is left under the mat -- the KEY and the CROWBAR are
+                 already yours.^";
+                return 2;
+        ];
+
+Object roomkey "room key"
+  with  name 'key' 'room' 'card' 'van-key' 'save' 'safe' 'keycard' 'duck'
+             'white',
+        description
+            "A worn white key card printed with a cartoon duck and the words
+             SAFE ROOM.  It will start the VAN.",
+        before  [;
+            Turn:
+                if (location == FrontPorch) { <<Go n_obj>>; return 2; }
+                "Turning it here does nothing -- it's meant for the VAN's
+                 ignition, and the van is back at the FRONT PORCH.^";
+                return 2;
+        ];
+
+Object crowbar "crowbar"
+  with  name 'crowbar' 'bar' 'pry' 'prybar' 'steel' 'jimmy' 'jack' 'lever'
+             'hook',
+        description
+            "Two feet of sharpened steel, the hook end crusted dark.  It will
+             crack a padlock, a welded cap, or a skull -- given the chance.";
+
+Object PocketKnife "POCKETKNIFE" LivingRoom
+  with  name 'knife' 'pocketknife' 'blade' 'pocket' 'folding',
+        description
+            "A folding knife, good edge, and a bite of rust at the hinge.";
+
+Object KitchenCan "GAS CAN (EMPTY)" Kitchen
+  with  name 'can' 'gas' 'jerrycan' 'petrol' 'empty' 'jerry' 'fuel' 'gasoline'
+             'container',
+        description
+            "A fat red plastic jerry can, EMPTY.  The generator's tank will fill
+             it -- PRY its cap.";
+
+Object FullCan "GAS CAN (FULL)"
+  with  name 'can' 'gas' 'jerrycan' 'petrol' 'full' 'jerry' 'fuel' 'gasoline'
+             'container',
+        description
+            "A fat red plastic jerry can sloshing with clear, sharp-smelling
+             GAS.  Finally.  Take it to the VAN.";
+
+Object Generator "GENERATOR" FrontYard
+  with  name 'generator' 'gen' 'fuel' 'tank' 'cap' 'welded' 'military'
+             'surplus',
+        description [;
+            if (hasfuel)
+                print "A squat military-surplus generator built into the
+                    yard wall.  The cap is popped and the tank sits dry --
+                    you already drained it into the GAS CAN.^";
+            else
+                print "A squat military-surplus generator built into the
+                    yard wall, the fuel cap welded shut with grime.  The
+                    gauge reads FULL.  PRY the cap with a CROWBAR and you
+                    can fill the KITCHEN GAS CAN.^";
+        ],
+        before  [;
+            Take:
+                "It's bolted into the yard wall.  You're not carrying a
+                 generator out of here.^";
+                return 2;
+            Open, Unlock, Attack:
+                if (hasfuel == false) {
+                    if (crowbar notin Player) {
+                        "The welded cap is smooth and slick with grime.  No grip.
+                         A CROWBAR would break it -- SEARCH the WELCOME MAT in
+                         the safe room to get one.^";
+                        return 2;
+                    }
+                    if (KitchenCan notin Player) {
+                        "The cap would pop fine, but you have nothing to catch
+                         the fuel in.  The EMPTY GAS CAN is sitting on the
+                         KITCHEN counter -- grab it first.^";
+                        return 2;
+                    }
+                    hasfuel = true;
+                    move FullCan to Player;
+                    remove KitchenCan;
+                    "You jam the crowbar under the welded cap and bear down.
+                     Metal shrieks, the cap pops with a pfft, and you tip the
+                     kitchen GAS CAN under the spout.  It fills with a slosh
+                     that sounds like freedom.  The can is now FULL of GAS.^";
+                    return 2;
+                }
+                "The cap is already off and the tank dry.  You already have the
+                 fuel.^";
+                return 2;
+        ];
+
+[ Initialise;
+    location = LivingRoom;
+    deadflag = 0;
+    won = false;
+    lookmode = 2;
+    StartDaemon(LivingRoom);
+    print "^",
+          "     ________________       ^",
+          "    ( / | / | / | / |)      ^",
+          "     ----------------       ^^",
+          "^[ Six months in.  The phone is dead and the safehouse is coming apart. ]^^",
+          "^You are TIM -- the last of the four.  Zoe, Louis, Francis:  all gone.",
+          " The Infected beat on the boards outside and they are getting LOUDER.^^",
+          "You have maybe a minute before they find the weak board.  Figure out the way out",
+          " -- you will not get a second chance.  (Type HELP if lost.)^";
+    new_line;
+    rtrue;
+];
+
+[ HelpSub;
+    "^You are TIM, alone in the SAFE ROOM while the horde beats on the
+     front door.  The door will not hold forever.^^
+     To escape you need three things done before you go NORTH from the FRONT
+     PORCH to reach the ESCAPE VAN:^^
+     1. SEARCH the WELCOME MAT (in this room) for a KEY and a CROWBAR.^
+     2. Take the EMPTY GAS CAN from the KITCHEN, carry it to the FRONT YARD,
+        and use the CROWBAR to OPEN the welded GENERATOR cap -- this fills the
+        can.  Keep carrying the now-FULL GAS CAN with you.^
+     3. OPEN the RUSTED GATE (also in the front yard) with the CROWBAR.^^
+     Once you are carrying the KEY and the FULL GAS CAN, and the GATE is open,
+     go NORTH from the FRONT PORCH to climb into the VAN and drive out.^^
+     Avoid the BATHROOM, the KITCHEN window, and leaving the FRONT YARD on
+     foot -- none of them end well.^";
+];
+
+Verb 'help' 'hint' 'hints' 'instructions'
+    *                                           -> Help;
+
+
+
+Include "Grammar";
+Include "VerbLib";
