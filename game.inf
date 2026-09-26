@@ -53,6 +53,19 @@ Object LivingRoom "SAFE ROOM"
         s_to     FrontPorch,
         has      light;
 
+Object FrontDoor "FRONT DOOR" LivingRoom
+  with  name 'door' 'front' 'boards' 'barricade' 'planks' 'crossbar',
+        description
+            "Reinforced with crossed planks and whatever else you could find,
+             it's the only thing between you and however many of them are
+             massed on the porch.  It's not going to hold forever.",
+        before  [;
+            Take:
+                "It's nailed across the doorway -- and even loose, a door
+                 isn't something you carry.^";
+                return 2;
+        ];
+
 Object Stairwell "UPSTAIRS LANDING"
   with  description
             "UPSTAIRS LANDING^
@@ -63,6 +76,19 @@ Object Stairwell "UPSTAIRS LANDING"
         e_to     Bedroom,
         n_to     Bathroom,
         has      light;
+
+Object WallMessage "MESSAGE" Stairwell
+  with  name 'message' 'wall' 'writing' 'scrawl' 'stain' 'smear',
+        description
+            "Just a few dark, smeared strokes before whoever started it
+             stopped -- or was stopped.  Whatever warning or goodbye it was
+             meant to be, it never got that far.  It's not legible now.",
+        before  [;
+            Take:
+                "It's smeared into the drywall.  You can't take a stain with
+                 you.^";
+                return 2;
+        ];
 
 Object Bedroom "BEDROOM"
   with  description [;
@@ -84,6 +110,19 @@ Object Bedroom "BEDROOM"
         ],
         s_to     Stairwell,
         has      light;
+
+Object BedroomWindow "WINDOW" Bedroom
+  with  name 'window' 'glass' 'pane' 'mattress',
+        description
+            "You can't see the glass at all -- the mattress is dragged flush
+             against the frame, blocking the light and, hopefully, anything
+             trying to look in from outside.",
+        before  [;
+            Take:
+                "It's set in the wall.  Even if you could pry it loose,
+                 where would you go with a window?^";
+                return 2;
+        ];
 
 Object Glock "GLOCK" Bedroom
   with  name 'glock' 'gun' 'pistol' 'handgun' 'sidearm' 'weapon' 'firearm',
@@ -120,8 +159,21 @@ Object Bathroom "BATHROOM"
         ],
         has   light;
 
+Object Mirror "MIRROR" Bathroom
+  with  name 'mirror' 'shards' 'reflection' 'glass',
+        description
+            "Cracked into a dozen jagged shards, whatever's left of your
+             reflection cut into pieces.  In this light, it's hard to tell if
+             you look this bad or worse.",
+        before  [;
+            Take:
+                "The shards are wicked-sharp and worthless.  You leave them
+                 where they are.^";
+                return 2;
+        ];
+
 Object Curtain "SHOWER CURTAIN" Bathroom
-  with  name 'curtain' 'shower' 'tub' 'bathtub' 'bath' 'vinyl' 'liner' 'mirror',
+  with  name 'curtain' 'shower' 'tub' 'bathtub' 'bath' 'vinyl' 'liner',
         description
             "Cheap vinyl, drawn shut.  Something behind it is dripping, slow
              and steady, though the water should be off by now.",
@@ -161,6 +213,22 @@ Object Kitchen "KITCHEN"
             return 1;
         ],
         has      light;
+
+Object KitchenWindow "BROKEN WINDOW" Kitchen
+  with  name 'window' 'broken' 'glass' 'frame' 'pane',
+        description
+            "Jagged glass in a busted frame.  Through the gap you can see
+             the yard: a fenced dead lawn thick with slow shapes, drifting
+             and turning like weeds in a current.  Going through here on
+             foot is begging for it.",
+        before  [;
+            Enter, GoIn, Climb, Search:
+                <<Go n_obj>>;
+                return 2;
+            Take:
+                "It's a hole in a wall, not a souvenir.^";
+                return 2;
+        ];
 
 Object FrontPorch "FRONT PORCH"
   with  description
